@@ -19,7 +19,8 @@ import hashlib
 import shlex
 import tncc
 
-ssl._create_default_https_context = ssl._create_unverified_context
+if hasattr(ssl, '_create_unverified_context'):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 """
 OATH code from https://github.com/bdauvergne/python-oath
@@ -282,4 +283,5 @@ if __name__ == "__main__":
     atexit.register(cleanup)
     jvpn = juniper_vpn(args)
     jvpn.run()
+
 
