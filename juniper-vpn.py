@@ -82,9 +82,9 @@ class juniper_vpn(object):
                               max_time=1)
 
         # Want debugging messages?
-        #self.br.set_debug_http(True)
-        #self.br.set_debug_redirects(True)
-        #self.br.set_debug_responses(True)
+        self.br.set_debug_http(True)
+        self.br.set_debug_redirects(True)
+        self.br.set_debug_responses(True)
 
         self.user_agent = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1'
         self.br.addheaders = [('User-agent', self.user_agent)]
@@ -102,6 +102,7 @@ class juniper_vpn(object):
 
     def next_action(self):
         if self.find_cookie('DSID'):
+            print("OZAPTF: DSID found in cookie")
             return 'connect'
 
         for form in self.br.forms():
@@ -170,6 +171,13 @@ class juniper_vpn(object):
 
         # Enter username/password
         self.br.select_form(nr=0)
+        print("OZAPTF FORM: ")
+        print("------")
+        try:
+            print(self.br.form)
+        except:
+            print("OZAPTF: Couldnt print form")
+        print("------")
         self.br.form['username'] = self.args.username
         self.br.form['password'] = self.args.password
         if self.args.pass_prefix:
@@ -214,12 +222,16 @@ class juniper_vpn(object):
         self.last_connect = time.time();
 
         dsid = self.find_cookie('DSID').value
+        print("OZAPTF DSID %s" % str(dsid))
         action = []
         for arg in self.args.action:
+            print("OZAPTF OLD ARG: %s" % arg)
             arg = arg.replace('%DSID%', dsid).replace('%HOST%', self.args.host)
+            print("OZAPTF NEW ARG: %s" % arg)
             action.append(arg)
 
-        p = subprocess.Popen(action, stdin=subprocess.PIPE)
+        f=open("OUT", "w")
+        p = subprocess.Popen(action, stdin=subprocess.PIPE, stdout=f, stderr=subprocess.STDOUT)
         if args.stdin is not None:
             stdin = args.stdin.replace('%DSID%', dsid)
             stdin = stdin.replace('%HOST%', self.args.host)
@@ -227,6 +239,7 @@ class juniper_vpn(object):
         else:
             ret = p.wait()
         ret = p.returncode
+        f.close()
 
         # Openconnect specific
         if ret == 2:
@@ -283,5 +296,3 @@ if __name__ == "__main__":
     atexit.register(cleanup)
     jvpn = juniper_vpn(args)
     jvpn.run()
-
-
